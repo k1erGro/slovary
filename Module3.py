@@ -145,7 +145,7 @@ class TestWindow(QWidget):
         
         layout = QVBoxLayout()
         
-        # Верхняя панель с прогрессом
+        # Верхняя панель с прогрессом и выбором вопроса
         top_layout = QHBoxLayout()
         
         self.progress = QLabel(f'Вопрос 1 из {len(self.questions)}')
@@ -155,6 +155,16 @@ class TestWindow(QWidget):
         self.score_label.setFont(QFont('Arial', 10, QFont.Bold))
         
         top_layout.addWidget(self.progress)
+        top_layout.addStretch()
+        
+        # Добавляем выпадающий список для выбора вопроса
+        top_layout.addWidget(QLabel('Перейти к вопросу:'))
+        self.question_combo = QComboBox()
+        self.question_combo.addItems([str(i+1) for i in range(len(self.questions))])
+        self.question_combo.setFixedWidth(60)
+        self.question_combo.currentIndexChanged.connect(self.on_question_selected)
+        top_layout.addWidget(self.question_combo)
+        
         top_layout.addStretch()
         top_layout.addWidget(self.score_label)
         
@@ -214,6 +224,11 @@ class TestWindow(QWidget):
         # Обновление прогресса
         self.progress.setText(f'Вопрос {self.current_question + 1} из {len(self.questions)}')
         
+        # Обновление комбобокса (без вызова сигнала)
+        self.question_combo.blockSignals(True)
+        self.question_combo.setCurrentIndex(self.current_question)
+        self.question_combo.blockSignals(False)
+        
         # Отображение вопроса
         self.question_label.setText(f"{self.current_question + 1}. {question['question']}")
         
@@ -268,6 +283,14 @@ class TestWindow(QWidget):
     def next_question(self):
         self.save_answer()
         self.current_question += 1
+        self.show_question()
+
+    def on_question_selected(self, index):
+        """Обработчик выбора вопроса из комбобокса."""
+        if index == self.current_question:
+            return
+        self.save_answer()
+        self.current_question = index
         self.show_question()
 
     def finish_test(self):
