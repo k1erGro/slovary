@@ -274,6 +274,8 @@ class TestWindow(QWidget):
         self.save_answer()
         self.calculate_score()
         self.show_results()
+        # После показа результатов закрываем окно теста
+        self.close()
 
     def calculate_score(self):
         self.score = 0

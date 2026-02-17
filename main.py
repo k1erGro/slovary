@@ -1,4 +1,37 @@
 import sys
+import os
+import sys
+import site
+
+# Автоматический поиск папки с плагинами Qt
+def setup_qt_plugins():
+    possible_paths = []
+    
+    # В виртуальном окружении
+    possible_paths.append(os.path.join(sys.prefix, 'Lib', 'site-packages', 'PyQt5', 'Qt5', 'plugins'))
+    possible_paths.append(os.path.join(sys.prefix, 'Lib', 'site-packages', 'PyQt5', 'plugins'))
+    
+    # В глобальных site-packages
+    for sp in site.getsitepackages():
+        possible_paths.append(os.path.join(sp, 'PyQt5', 'Qt5', 'plugins'))
+        possible_paths.append(os.path.join(sp, 'PyQt5', 'plugins'))
+    
+    for path in possible_paths:
+        if os.path.isdir(os.path.join(path, 'platforms')):
+            os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = path
+            print(f"✅ Найден путь к плагинам: {path}")
+            return True
+    
+    # Если не нашли, выводим подсказку
+    print("❌ Не удалось найти папку plugins. Укажите путь вручную.")
+    return False
+
+setup_qt_plugins()
+
+# Теперь можно импортировать PyQt5
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -69,11 +102,12 @@ class MainWindow(QMainWindow):
         layout.addWidget(results_btn)
         
         # Статистика
-        stats = self.get_user_stats()
-        stats_label = QLabel(stats)
-        stats_label.setAlignment(Qt.AlignCenter)
-        stats_label.setStyleSheet('background-color: #ecf0f1; padding: 10px; border-radius: 5px;')
-        layout.addWidget(stats_label)
+        stats_text = self.get_user_stats()
+        self.stats_label = QLabel(stats_text)
+        self.stats_label.setAlignment(Qt.AlignCenter)
+        self.stats_label.setWordWrap(True)
+        self.stats_label.setStyleSheet('background-color: #ecf0f1; padding: 10px; border-radius: 5px;')
+        layout.addWidget(self.stats_label)
         
         # Выход
         logout_btn = QPushButton('🚪 Выйти')
@@ -105,14 +139,10 @@ class MainWindow(QMainWindow):
         total_tests = len(tests)
         avg_score = sum(t['score'] for t in tests) / total_tests
         best_score = max(t['score'] for t in tests)
-        
-        return f"""
-        <b>Ваша статистика:</b><br>
-        Всего тестов пройдено: {total_tests}<br>
-        Последний результат: {last_test['score']}/{last_test['total']}<br>
-        Средний балл: {avg_score:.1f}<br>
-        Лучший результат: {best_score}/{last_test['total']}
-        """
+        return (f"Всего тестов пройдено: {total_tests}\n"
+                f"Последний результат: {last_test['score']}/{last_test['total']}\n"
+                f"Средний балл: {avg_score:.1f}\n"
+                f"Лучший результат: {best_score}/{last_test['total']}")
 
     def open_theory(self):
         self.theory_window = TheoryWindow()
